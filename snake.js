@@ -324,7 +324,7 @@ function collisionSnakeHeadSnake(snake) {
     return false;
 }
 
-function addScore(snake) {
+function addScore(snake, MAX_PLAYER_NAME) {
     let item = window.localStorage.getItem("bestScores");
 
     let list = [];
@@ -338,7 +338,7 @@ function addScore(snake) {
     if (listLength < 10 || snake.score > list[listLength - 1].score) {
         let pName = prompt("Enter your name");
 
-        if (pName === null) {
+        if (pName === null || pName.length < 2 || pName.length > MAX_PLAYER_NAME) {
             return;
         }
 
@@ -382,10 +382,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let snake = new Snake(WIDTH, HEIGHT);
     let apple = new Fruit(snake);
 
-    let player = {
-        name: "Player1",
-        score: 0
-    }
+    const MAX_PLAYER_NAME = 60;
 
     let game = true;
     let pause = false;
@@ -476,7 +473,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             if (collisionSnakeHeadWall(snake, nextHeadCoordinates) || collisionSnakeHeadSnake(snake)) {
-                addScore(snake);
+                addScore(snake, MAX_PLAYER_NAME);
                 game = false;
             }
 
@@ -649,16 +646,91 @@ document.addEventListener("DOMContentLoaded", function () {
                 listLength = list.length;
             }
 
+            // ctx.beginPath();
+            // ctx.font = "50px monospace";
+            // ctx.strokeStyle = "white";
+            // ctx.textAlign = "center";
+            // ctx.strokeText("GAME OVER", WIDTH / 2, HEIGHT / 8);
+            // ctx.closePath();
+
             ctx.beginPath();
-            ctx.font = "30px Arial";
+            ctx.font = "50px monospace";
             ctx.fillStyle = "red";
+            ctx.textAlign = "center";
+            ctx.fillText("GAME OVER", WIDTH / 2, HEIGHT / 8);
+            ctx.font = "30px monospace";
 
             if (listLength === 0) {
-                ctx.fillText("Game Over", canvas.width / 2 - 100, canvas.height / 2);
+                
             } else {
                 for (let i = 0 ; i < listLength ; i++) {
-                    ctx.textAlign = "left";
-                    ctx.fillText(list[i].name + " ... " + list[i].score, canvas.width / 5, (canvas.height / 12) * (i + 1));
+                    /*
+                    let styles = {
+    "blue": ["royalblue", "blue", "darkblue", "navy", "midnightblue"],
+    "green": ["limegreen", "green", "darkgreen", "forestgreen", "darkolivegreen"],
+    "red": ["red", "darkred", "firebrick", "crimson", "maroon"],
+    "yellow": ["yellow", "gold", "goldenrod", "darkgoldenrod", "darkkhaki"],
+    "purple": ["purple", "darkmagenta", "darkviolet", "indigo", "darkslateblue"],
+    "orange": ["orange", "darkorange", "orangered", "tomato", "coral"],
+    "pink": ["pink", "hotpink", "deeppink", "mediumvioletred", "palevioletred"],
+}
+*/
+                    switch (i) {
+                        case 0: {
+                            ctx.fillStyle = "gold";
+                            break;
+                        }
+                        case 1: {
+                            ctx.fillStyle = "silver";
+                            break;
+                        }
+                        case 2: {
+                            ctx.fillStyle = "#CD7F32";
+                            break;
+                        }
+                        case 3: {
+                            ctx.fillStyle = "crimson";
+                            break;
+                        }
+                        case 4: {
+                            ctx.fillStyle = "hotpink";
+                            break;
+                        }
+                        case 5: {
+                            ctx.fillStyle = "forestgreen";
+                            break;
+                        }
+                        case 6: {
+                            ctx.fillStyle = "darkmagenta";
+                            break;
+                        }
+                        case 7: {
+                            ctx.fillStyle = "saddlebrown";
+                            break;
+                        }
+                        case 8: {
+                            ctx.fillStyle = "grey";
+                            break;
+                        }
+                        case 9: {
+                            ctx.fillStyle = "royalblue";
+                            break;
+                        }
+                        default: {
+                            ctx.fillStyle = "red";
+                            break;
+                        }
+                    }
+                    let text = list[i].name + " ";
+                    let textCat = list[i].name + list[i].score + "  ";
+                    let pPoints = MAX_PLAYER_NAME - textCat.length;
+                    
+                    for (let j = 0 ; j <= pPoints ; j++) {
+                        text += ".";
+                    }
+
+                    text += " " + list[i].score;
+                    ctx.fillText(text, WIDTH / 2, (HEIGHT / 14) * (i + 3));
                 }
             }
 
