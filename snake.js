@@ -338,9 +338,11 @@ function addScore(snake, MAX_PLAYER_NAME) {
     if (listLength < 10 || snake.score > list[listLength - 1].score) {
         let pName = prompt("Enter your name");
 
-        if (pName === null || pName.length < 2 || pName.length > MAX_PLAYER_NAME) {
+        if (pName === null || pName.trim().length < 2 || pName.trim().length >= (MAX_PLAYER_NAME - (snake.score.toString().length) - 1)) {
             return;
         }
+
+        pName = pName.trim();
 
         let player = {
             name: pName,
