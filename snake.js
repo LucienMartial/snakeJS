@@ -393,7 +393,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener("keydown", function (e) {
         switch (e.key) {
             case "ArrowRight": {
-                if (snake.vecX === 0) {
+                if (snake.vecX === 0 && !pause) {
                     snake.vecX = 1;
                     snake.vecY = 0;
                     snake.turn();
@@ -401,7 +401,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 break;
             }
             case "ArrowLeft": {
-                if (snake.vecX === 0) {
+                if (snake.vecX === 0 && !pause) {
                     snake.vecX = -1;
                     snake.vecY = 0;
                     snake.turn();
@@ -409,7 +409,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 break;
             }
             case "ArrowUp": {
-                if (snake.vecY === 0) {
+                if (snake.vecY === 0 && !pause) {
                     snake.vecX = 0;
                     snake.vecY = -1;
                     snake.turn();
@@ -417,7 +417,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 break;
             }
             case "ArrowDown": {
-                if (snake.vecY === 0) {
+                if (snake.vecY === 0 && !pause) {
                     snake.vecX = 0;
                     snake.vecY = 1;
                     snake.turn();
@@ -646,13 +646,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 listLength = list.length;
             }
 
-            // ctx.beginPath();
-            // ctx.font = "50px monospace";
-            // ctx.strokeStyle = "white";
-            // ctx.textAlign = "center";
-            // ctx.strokeText("GAME OVER", WIDTH / 2, HEIGHT / 8);
-            // ctx.closePath();
-
             ctx.beginPath();
             ctx.font = "50px monospace";
             ctx.fillStyle = "red";
@@ -664,17 +657,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 
             } else {
                 for (let i = 0 ; i < listLength ; i++) {
-                    /*
-                    let styles = {
-    "blue": ["royalblue", "blue", "darkblue", "navy", "midnightblue"],
-    "green": ["limegreen", "green", "darkgreen", "forestgreen", "darkolivegreen"],
-    "red": ["red", "darkred", "firebrick", "crimson", "maroon"],
-    "yellow": ["yellow", "gold", "goldenrod", "darkgoldenrod", "darkkhaki"],
-    "purple": ["purple", "darkmagenta", "darkviolet", "indigo", "darkslateblue"],
-    "orange": ["orange", "darkorange", "orangered", "tomato", "coral"],
-    "pink": ["pink", "hotpink", "deeppink", "mediumvioletred", "palevioletred"],
-}
-*/
                     switch (i) {
                         case 0: {
                             ctx.fillStyle = "gold";
