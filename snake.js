@@ -654,7 +654,25 @@ document.addEventListener("DOMContentLoaded", function () {
             ctx.font = "30px monospace";
 
             if (listLength === 0) {
-                
+                ctx.fillStyle = "white";
+                let dispText = "There will soon be a list of records here ;)";
+                let pPoints = MAX_PLAYER_NAME - dispText.length;
+                let text = "";
+
+                for (let i = 0 ; i <= pPoints ; i++) {
+                    text += ".";
+
+                    if (i == pPoints / 2) {
+                        text += dispText;
+
+                        if (pPoints % 2 == 0) {
+                            text += ".";
+                        }
+                    }
+                }
+
+                ctx.fillText(text, WIDTH / 2, (HEIGHT / 2));
+                ctx.closePath();
             } else {
                 for (let i = 0 ; i < listLength ; i++) {
                     switch (i) {
