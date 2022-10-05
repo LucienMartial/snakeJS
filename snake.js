@@ -54,18 +54,18 @@ class Snake {
     constructor(width, height) {
         this.WIDTH = width;
         this.HEIGHT = height;
-        this.headCoordinates = new Coordinates(this.WIDTH / 2, this.HEIGHT / 30);
+        this.headCoordinates = new Coordinates(this.WIDTH / 2, this.HEIGHT / 5);
 
         this.vecX = 0;
-        this.vecY = 1;
-
-        this.points = [];
-        this.points.push(new SnakePoint(this.headCoordinates.x, this.headCoordinates.y, this.vecX, this.vecY));
+        this.vecY = 0;
 
         this.bodyLength = 250;
         this.size = 25;
         this.speed = 0.4;
         this.color = "green";
+
+        this.points = [];
+        this.points.push(new SnakePoint(this.headCoordinates.x, this.headCoordinates.y - this.bodyLength / 2, 0, 1));
 
         this.turbo = 3;
         this.turboEngaged = false;
@@ -181,12 +181,14 @@ function distanceBetweenCoordinates(point1, point2) {
     return Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
 }
 
-function collisionCircleRectangle(circle, rectangle) {
+function collisionCircleRectangle(circle, rectangle, snake) {
+    const hitBoxLeaf = snake.size / 4;
+
     let circleDistanceX = Math.abs(circle.coordinates.x - rectangle.x - rectangle.width / 2);
     let circleDistanceY = Math.abs(circle.coordinates.y - rectangle.y - rectangle.height / 2);
 
-    if (circleDistanceX > (rectangle.width / 2 + circle.radius)) { return false; }
-    if (circleDistanceY > (rectangle.height / 2 + circle.radius)) { return false; }
+    if (circleDistanceX > (rectangle.width / 2 + circle.radius + hitBoxLeaf)) { return false; }
+    if (circleDistanceY > (rectangle.height / 2 + circle.radius + hitBoxLeaf)) { return false; }
 
     if (circleDistanceX <= (rectangle.width / 2)) { return true; }
     if (circleDistanceY <= (rectangle.height / 2)) { return true; }
@@ -194,7 +196,7 @@ function collisionCircleRectangle(circle, rectangle) {
     let dx = circleDistanceX - rectangle.width / 2;
     let dy = circleDistanceY - rectangle.height / 2;
 
-    return (dx * dx + dy * dy <= (circle.radius * circle.radius));
+    return (dx * dx + dy * dy <= ((circle.radius + hitBoxLeaf) * (circle.radius + hitBoxLeaf)));
 }
 
 function makeRectangleWithSegements(snakeSize, snakePoint0, snakePoint1) {
@@ -249,14 +251,14 @@ function collisionSnakeFruit(snake, fruit) {
 
     let rectangle = makeRectangleWithSegements(snake.size, snakeHeadPoint, snake.points[0]);
 
-    if (collisionCircleRectangle(fruit, rectangle)) {
+    if (collisionCircleRectangle(fruit, rectangle, snake)) {
         return true;
     }
 
     for (let i = 1; i < pointsLength; i++) {
         rectangle = makeRectangleWithSegements(snake.size, snake.points[i - 1], snake.points[i]);
 
-        if (collisionCircleRectangle(fruit, rectangle)) {
+        if (collisionCircleRectangle(fruit, rectangle, snake)) {
             return true;
         }
     }
@@ -265,12 +267,14 @@ function collisionSnakeFruit(snake, fruit) {
 }
 
 function collisionSnakeHeadFruit(snake, fruit) {
+    const hitBoxLeaf = snake.size / 4;
+    
     let snakeHeadRadius = snake.size / 2;
 
     let distanceX = Math.abs(fruit.coordinates.x - snake.headCoordinates.x);
     let distanceY = Math.abs(fruit.coordinates.y - snake.headCoordinates.y);
 
-    return (distanceX * distanceX + distanceY * distanceY <= (snakeHeadRadius + fruit.radius) * (snakeHeadRadius + fruit.radius));
+    return (distanceX * distanceX + distanceY * distanceY <= (snakeHeadRadius + fruit.radius + hitBoxLeaf) * (snakeHeadRadius + fruit.radius + hitBoxLeaf));
 }
 
 function collisionSnakeHeadWall(snake, nextHeadCoordinates) {
@@ -363,7 +367,16 @@ function addScore(snake, MAX_PLAYER_NAME) {
     }
 }
 
-let styles = {
+function displayText(ctx, text, police, style, align, posX, posY) {
+    ctx.beginPath();
+    ctx.font = police;
+    ctx.fillStyle = style;
+    ctx.textAlign = align;
+    ctx.fillText(text, posX, posY);
+    ctx.closePath();
+}
+
+const styles = {
     "blue": ["royalblue", "blue", "darkblue", "navy", "midnightblue"],
     "green": ["limegreen", "green", "darkgreen", "forestgreen", "darkolivegreen"],
     "red": ["red", "darkred", "firebrick", "crimson", "maroon"],
@@ -388,6 +401,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let game = true;
     let pause = false;
+    let endOfGame = false;
 
     let enterKey = false;
     let spaceKey = false;
@@ -395,7 +409,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener("keydown", function (e) {
         switch (e.key) {
             case "ArrowRight": {
-                if (snake.vecX === 0 && !pause) {
+                if (snake.vecX === 0 && !pause && !endOfGame) {
                     snake.vecX = 1;
                     snake.vecY = 0;
                     snake.turn();
@@ -403,7 +417,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 break;
             }
             case "ArrowLeft": {
-                if (snake.vecX === 0 && !pause) {
+                if (snake.vecX === 0 && !pause && !endOfGame) {
                     snake.vecX = -1;
                     snake.vecY = 0;
                     snake.turn();
@@ -411,7 +425,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 break;
             }
             case "ArrowUp": {
-                if (snake.vecY === 0 && !pause) {
+                if (snake.vecY === 0 && !pause && (snake.vecX !== 0 || snake.vecY !== 0) && !endOfGame) {
                     snake.vecX = 0;
                     snake.vecY = -1;
                     snake.turn();
@@ -419,7 +433,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 break;
             }
             case "ArrowDown": {
-                if (snake.vecY === 0 && !pause) {
+                if (snake.vecY === 0 && !pause && !endOfGame) {
                     snake.vecX = 0;
                     snake.vecY = 1;
                     snake.turn();
@@ -427,7 +441,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 break;
             }
             case "Enter": {
-                enterKey ? enterKey = false : enterKey = true;
+                if (snake.vecX !== 0 || snake.vecY !== 0) {
+                    enterKey = enterKey ? false : true;
+                    // enterKey = !enterKey;
+                    // enterKey = !enterKey;
+                }
                 break;
             }
             case " ": {
@@ -455,6 +473,8 @@ document.addEventListener("DOMContentLoaded", function () {
     /** Dernière mise à jour de l'affichage */
     let last = Date.now();
     let animation = 0;
+    let displayMessage = 0;
+    let cdEndOfGame = 0;
 
     /** Dernière mise à jour */
     function update(now) {
@@ -462,13 +482,20 @@ document.addEventListener("DOMContentLoaded", function () {
         let dt = now - last;
         last = now;
         animation = (animation >= 200) ? 0 : animation + dt;
+        displayMessage = (displayMessage >= 1000) ? 0 : displayMessage + dt;
+
+        if (endOfGame && cdEndOfGame < 1000) {
+            cdEndOfGame += dt;
+        } else {
+            endOfGame = false;
+        }
 
         if (enterKey && game) {
             pause = !pause;
             enterKey = false;
         }
 
-        if (game && !pause) {
+        if (game && !pause && (snake.vecX !== 0 || snake.vecY !== 0)) {
             let nextHeadCoordinates = {
                 x: snake.headCoordinates.x + snake.vecX * dt * snake.speed,
                 y: snake.headCoordinates.y + snake.vecY * dt * snake.speed
@@ -476,7 +503,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (collisionSnakeHeadWall(snake, nextHeadCoordinates) || collisionSnakeHeadSnake(snake)) {
                 addScore(snake, MAX_PLAYER_NAME);
+                endOfGame = true;
                 game = false;
+                return;
             }
 
             let style = Object.values(styles)[Math.floor(Math.random() * Object.values(styles).length)];
@@ -506,7 +535,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function render() {
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
-        if (game || pause) {
+        if (game || pause || (snake.vecX === 0 && snake.vecY === 0) || endOfGame) {
             ctx.beginPath();
             ctx.strokeStyle = snake.color;
             ctx.lineWidth = snake.size;
@@ -554,12 +583,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     ctx.arc(snake.headCoordinates.x + snake.size / 3, snake.headCoordinates.y + snake.size / 4, snake.size / 5, 0, 2 * Math.PI);
                 }
             } else {
-                if (snake.vecY === 1) {
-                    ctx.arc(snake.headCoordinates.x - snake.size / 4, snake.headCoordinates.y - snake.size / 3, snake.size / 5, 0, 2 * Math.PI);
-                    ctx.arc(snake.headCoordinates.x + snake.size / 4, snake.headCoordinates.y - snake.size / 3, snake.size / 5, 0, 2 * Math.PI);
-                } else {
+                if (snake.vecY === -1) {
                     ctx.arc(snake.headCoordinates.x - snake.size / 4, snake.headCoordinates.y + snake.size / 3, snake.size / 5, 0, 2 * Math.PI);
                     ctx.arc(snake.headCoordinates.x + snake.size / 4, snake.headCoordinates.y + snake.size / 3, snake.size / 5, 0, 2 * Math.PI);
+                } else {
+                    ctx.arc(snake.headCoordinates.x - snake.size / 4, snake.headCoordinates.y - snake.size / 3, snake.size / 5, 0, 2 * Math.PI);
+                    ctx.arc(snake.headCoordinates.x + snake.size / 4, snake.headCoordinates.y - snake.size / 3, snake.size / 5, 0, 2 * Math.PI);
                 }
             }
 
@@ -578,12 +607,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     ctx.arc(snake.headCoordinates.x + snake.size / 3, snake.headCoordinates.y + snake.size / 4, snake.size / 10, 0, 2 * Math.PI);
                 }
             } else {
-                if (snake.vecY === 1) {
-                    ctx.arc(snake.headCoordinates.x - snake.size / 4, snake.headCoordinates.y - snake.size / 3, snake.size / 10, 0, 2 * Math.PI);
-                    ctx.arc(snake.headCoordinates.x + snake.size / 4, snake.headCoordinates.y - snake.size / 3, snake.size / 10, 0, 2 * Math.PI);
-                } else {
+                if (snake.vecY === -1) {
                     ctx.arc(snake.headCoordinates.x - snake.size / 4, snake.headCoordinates.y + snake.size / 3, snake.size / 10, 0, 2 * Math.PI);
                     ctx.arc(snake.headCoordinates.x + snake.size / 4, snake.headCoordinates.y + snake.size / 3, snake.size / 10, 0, 2 * Math.PI);
+                } else {
+                    ctx.arc(snake.headCoordinates.x - snake.size / 4, snake.headCoordinates.y - snake.size / 3, snake.size / 10, 0, 2 * Math.PI);
+                    ctx.arc(snake.headCoordinates.x + snake.size / 4, snake.headCoordinates.y - snake.size / 3, snake.size / 10, 0, 2 * Math.PI);
                 }
             }
 
@@ -603,12 +632,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     ctx.lineTo(snake.headCoordinates.x - snake.size / 2, snake.headCoordinates.y);
                 }
             } else {
-                if (snake.vecY === 1) {
-                    ctx.moveTo(snake.headCoordinates.x, snake.headCoordinates.y + snake.size / 3);
-                    ctx.lineTo(snake.headCoordinates.x, snake.headCoordinates.y + snake.size / 2);
-                } else {
+                if (snake.vecY === -1) {
                     ctx.moveTo(snake.headCoordinates.x, snake.headCoordinates.y - snake.size / 3);
                     ctx.lineTo(snake.headCoordinates.x, snake.headCoordinates.y - snake.size / 2);
+                } else {
+                    ctx.moveTo(snake.headCoordinates.x, snake.headCoordinates.y + snake.size / 3);
+                    ctx.lineTo(snake.headCoordinates.x, snake.headCoordinates.y + snake.size / 2);
                 }
             }
 
@@ -629,13 +658,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
             ctx.closePath();
 
+            if (snake.vecX === 0 && snake.vecY === 0 && displayMessage < 500) {
+                displayText(ctx, "PRESS ANY DIRECTIONAL KEY TO START", "40px monospace", "white", "center", WIDTH / 2, HEIGHT / 2);
+            }
+
             if (pause) {
-                ctx.beginPath();
-                ctx.font = "40px monospace";
-                ctx.fillStyle = "white";
-                ctx.textAlign = "center";
-                ctx.fillText("PAUSE", WIDTH / 2, HEIGHT / 2);
-                ctx.closePath();
+                displayText(ctx, "PAUSE", "40px monospace", "white", "center", WIDTH / 2, HEIGHT / 2);
             }
         } else {
             let item = window.localStorage.getItem("bestScores");
@@ -648,11 +676,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 listLength = list.length;
             }
 
-            ctx.beginPath();
-            ctx.font = "50px monospace";
-            ctx.fillStyle = "red";
-            ctx.textAlign = "center";
-            ctx.fillText("GAME OVER", WIDTH / 2, HEIGHT / 8);
+            displayText(ctx, "GAME OVER", "50px monospace", "red", "center", WIDTH / 2, HEIGHT / 8);
+
             ctx.font = "30px monospace";
 
             if (listLength === 0) {
@@ -676,53 +701,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 ctx.fillText(text, WIDTH / 2, (HEIGHT / 2));
                 ctx.closePath();
             } else {
+                const colors = {
+                    0: "gold",
+                    1: "silver",
+                    2: "#CD7F32",
+                    3: "crimson",
+                    4: "hotpink",
+                    5: "forestgreen",
+                    6: "darkmagenta",
+                    7: "saddlebrown",
+                    8: "royalblue",
+                    9: "gold"
+                };
+
                 for (let i = 0 ; i < listLength ; i++) {
-                    switch (i) {
-                        case 0: {
-                            ctx.fillStyle = "gold";
-                            break;
-                        }
-                        case 1: {
-                            ctx.fillStyle = "silver";
-                            break;
-                        }
-                        case 2: {
-                            ctx.fillStyle = "#CD7F32";
-                            break;
-                        }
-                        case 3: {
-                            ctx.fillStyle = "crimson";
-                            break;
-                        }
-                        case 4: {
-                            ctx.fillStyle = "hotpink";
-                            break;
-                        }
-                        case 5: {
-                            ctx.fillStyle = "forestgreen";
-                            break;
-                        }
-                        case 6: {
-                            ctx.fillStyle = "darkmagenta";
-                            break;
-                        }
-                        case 7: {
-                            ctx.fillStyle = "saddlebrown";
-                            break;
-                        }
-                        case 8: {
-                            ctx.fillStyle = "grey";
-                            break;
-                        }
-                        case 9: {
-                            ctx.fillStyle = "royalblue";
-                            break;
-                        }
-                        default: {
-                            ctx.fillStyle = "red";
-                            break;
-                        }
-                    }
+                    ctx.fillStyle = colors[i];
                     let text = list[i].name + " ";
                     let textCat = list[i].name + list[i].score + "  ";
                     let pPoints = MAX_PLAYER_NAME - textCat.length;
