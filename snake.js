@@ -396,8 +396,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let snake = new Snake(WIDTH, HEIGHT);
     let apple = new Fruit(snake);
-
-    const MAX_PLAYER_NAME = 60;
+    
+    const MAX_PLAYER_NAME = parseInt(WIDTH / 32);
 
     let game = true;
     let pause = false;
